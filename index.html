@@ -1,0 +1,91 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;th&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;UTF-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;ระบบลงทะเบียนนักศึกษา&lt;/title&gt;
+&lt;style&gt;
+body{font-family:Tahoma,sans-serif;max-width:760px;
+margin:30px auto;padding:0 16px}
+input,button{padding:9px;margin:4px 0;width:100%;
+box-sizing:border-box}
+button{background:#1f883d;color:#fff;border:0;
+cursor:pointer;font-size:16px}
+table{width:100%;border-collapse:collapse;margin-top:18px}
+th,td{border:1px solid #ccc;padding:7px;text-align:left}
+th{background:#eef5f1}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;ระบบลงทะเบียนนักศึกษา&lt;/h1&gt;
+&lt;input id=&quot;first_name&quot; placeholder=&quot;ชื่อ&quot;&gt;
+&lt;input id=&quot;last_name&quot; placeholder=&quot;นามสกุล&quot;&gt;
+&lt;input id=&quot;nickname&quot; placeholder=&quot;ชื่อเล่น&quot;&gt;
+&lt;input id=&quot;student_id&quot; placeholder=&quot;เลขนักศึกษา&quot;&gt;
+&lt;input id=&quot;major&quot; placeholder=&quot;สาขาวิชา&quot;&gt;
+&lt;button onclick=&quot;register()&quot;&gt;ลงทะเบียน&lt;/button&gt;
+&lt;p id=&quot;msg&quot;&gt;&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;&lt;tr&gt;&lt;th&gt;#&lt;/th&gt;&lt;th&gt;ชื่อ-นามสกุล&lt;/th&gt;&lt;th&gt;ชื่อเล่น&lt;/th&gt;
+&lt;th&gt;เลขนักศึกษา&lt;/th&gt;&lt;th&gt;สาขาวิชา&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+&lt;tbody id=&quot;rows&quot;&gt;&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;script src=&quot;https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+// 1) เชื่อมต่อ Supabase (ใส่ค่าของตนเอง)
+const SUPABASE_URL = &#39;ใส่ Project URL ที่นี่&#39;;
+const SUPABASE_KEY = &#39;ใส่ anon/publishable key ที่นี่&#39;;
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const fields = [&#39;first_name&#39;,&#39;last_name&#39;,&#39;nickname&#39;,
+&#39;student_id&#39;,&#39;major&#39;];
+const val = (id) =&gt; document.getElementById(id).value.trim();
+// 2) เพิ่มข้อมูลลงทะเบียน
+async function register() {
+const msg = document.getElementById(&#39;msg&#39;);
+const row = {
+first_name: val(&#39;first_name&#39;), last_name: val(&#39;last_name&#39;),
+nickname: val(&#39;nickname&#39;), student_id: val(&#39;student_id&#39;),
+major: val(&#39;major&#39;)
+};
+if (!row.first_name || !row.last_name ||
+!row.student_id || !row.major) {
+msg.textContent = &#39;กรุณากรอกข้อมูลให้ครบ&#39;;
+return;
+}
+const { error } = await db.from(&#39;registrations&#39;).insert(row);
+if (error) {
+msg.textContent = (error.code === &#39;23505&#39;)
+? &#39;เลขนักศึกษานี้ลงทะเบียนแล้ว&#39;
+: &#39;เกิดข้อผิดพลาด: &#39; + error.message;
+return;
+}
+msg.textContent = &#39;ลงทะเบียนสำเร็จ&#39;;
+fields.forEach((id) =&gt; document.getElementById(id).value = &#39;&#39;);
+loadRows();
+}
+// 3) ดึงข้อมูลมาแสดงเป็นตาราง
+async function loadRows() {
+const { data, error } = await db.from(&#39;registrations&#39;)
+.select(&#39;*&#39;).order(&#39;id&#39;, { ascending: false });
+if (error) {
+document.getElementById(&#39;msg&#39;).textContent =
+&#39;อ่านข้อมูลไม่ได้: &#39; + error.message;
+return;
+}
+const tb = document.getElementById(&#39;rows&#39;);
+tb.innerHTML = &#39;&#39;;
+data.forEach((r) =&gt; {
+const tr = document.createElement(&#39;tr&#39;);
+[r.id, r.first_name + &#39; &#39; + r.last_name, r.nickname || &#39;-&#39;,
+r.student_id, r.major].forEach((v) =&gt; {
+const td = document.createElement(&#39;td&#39;);
+td.textContent = v;
+tr.appendChild(td);
+});
+tb.appendChild(tr);
+});
+}
+loadRows();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
