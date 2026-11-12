@@ -1,91 +1,403 @@
-&lt;!DOCTYPE html&gt;
-&lt;html lang=&quot;th&quot;&gt;
-&lt;head&gt;
-&lt;meta charset=&quot;UTF-8&quot;&gt;
-&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
-&lt;title&gt;ระบบลงทะเบียนนักศึกษา&lt;/title&gt;
-&lt;style&gt;
-body{font-family:Tahoma,sans-serif;max-width:760px;
-margin:30px auto;padding:0 16px}
-input,button{padding:9px;margin:4px 0;width:100%;
-box-sizing:border-box}
-button{background:#1f883d;color:#fff;border:0;
-cursor:pointer;font-size:16px}
-table{width:100%;border-collapse:collapse;margin-top:18px}
-th,td{border:1px solid #ccc;padding:7px;text-align:left}
-th{background:#eef5f1}
-&lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-&lt;h1&gt;ระบบลงทะเบียนนักศึกษา&lt;/h1&gt;
-&lt;input id=&quot;first_name&quot; placeholder=&quot;ชื่อ&quot;&gt;
-&lt;input id=&quot;last_name&quot; placeholder=&quot;นามสกุล&quot;&gt;
-&lt;input id=&quot;nickname&quot; placeholder=&quot;ชื่อเล่น&quot;&gt;
-&lt;input id=&quot;student_id&quot; placeholder=&quot;เลขนักศึกษา&quot;&gt;
-&lt;input id=&quot;major&quot; placeholder=&quot;สาขาวิชา&quot;&gt;
-&lt;button onclick=&quot;register()&quot;&gt;ลงทะเบียน&lt;/button&gt;
-&lt;p id=&quot;msg&quot;&gt;&lt;/p&gt;
-&lt;table&gt;
-&lt;thead&gt;&lt;tr&gt;&lt;th&gt;#&lt;/th&gt;&lt;th&gt;ชื่อ-นามสกุล&lt;/th&gt;&lt;th&gt;ชื่อเล่น&lt;/th&gt;
-&lt;th&gt;เลขนักศึกษา&lt;/th&gt;&lt;th&gt;สาขาวิชา&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
-&lt;tbody id=&quot;rows&quot;&gt;&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;script src=&quot;https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2&quot;&gt;&lt;/script&gt;
-&lt;script&gt;
-// 1) เชื่อมต่อ Supabase (ใส่ค่าของตนเอง)
-const SUPABASE_URL = &#39;ใส่ Project URL ที่นี่&#39;;
-const SUPABASE_KEY = &#39;ใส่ anon/publishable key ที่นี่&#39;;
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const fields = [&#39;first_name&#39;,&#39;last_name&#39;,&#39;nickname&#39;,
-&#39;student_id&#39;,&#39;major&#39;];
-const val = (id) =&gt; document.getElementById(id).value.trim();
-// 2) เพิ่มข้อมูลลงทะเบียน
-async function register() {
-const msg = document.getElementById(&#39;msg&#39;);
-const row = {
-first_name: val(&#39;first_name&#39;), last_name: val(&#39;last_name&#39;),
-nickname: val(&#39;nickname&#39;), student_id: val(&#39;student_id&#39;),
-major: val(&#39;major&#39;)
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ระบบลงทะเบียนนักศึกษา</title>
+
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 16px;
+            background: #f4f7f5;
+        }
+
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1f883d;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 25px;
+        }
+
+        input, button {
+            padding: 12px;
+            margin: 6px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        input {
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #1f883d;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #176b30;
+        }
+
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        #msg {
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #eef5f1;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .count {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #1f883d;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>ระบบลงทะเบียนนักศึกษา</h1>
+
+    <h2>กรอกข้อมูลนักศึกษา</h2>
+
+    <form id="registerForm">
+
+        <input
+            type="text"
+            id="first_name"
+            placeholder="กรอกชื่อ"
+            required
+        >
+
+        <input
+            type="text"
+            id="last_name"
+            placeholder="กรอกนามสกุล"
+            required
+        >
+
+        <input
+            type="text"
+            id="nickname"
+            placeholder="กรอกชื่อเล่น"
+        >
+
+        <input
+            type="text"
+            id="student_id"
+            placeholder="กรอกรหัสนักศึกษา"
+            required
+        >
+
+        <input
+            type="text"
+            id="major"
+            placeholder="กรอกสาขาวิชา"
+            required
+        >
+
+        <button type="submit" id="submitBtn">
+            ลงทะเบียน
+        </button>
+
+    </form>
+
+    <p id="msg" aria-live="polite"></p>
+
+    <h2>รายชื่อนักศึกษาที่ลงทะเบียน</h2>
+
+    <p class="count" id="count">
+        จำนวนผู้ลงทะเบียน: 0 คน
+    </p>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>ลำดับ</th>
+                    <th>ชื่อ-นามสกุล</th>
+                    <th>ชื่อเล่น</th>
+                    <th>รหัสนักศึกษา</th>
+                    <th>สาขาวิชา</th>
+                </tr>
+            </thead>
+
+            <tbody id="rows">
+                <tr>
+                    <td colspan="5">กำลังโหลดข้อมูล...</td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- เชื่อมต่อ Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+// ==================================
+// 1. เชื่อมต่อฐานข้อมูล Supabase
+// ==================================
+
+// ใส่ Project URL ของตัวเอง
+const SUPABASE_URL = 'ใส่ Project URL ที่นี่';
+
+// ใส่ Publishable key หรือ anon key
+const SUPABASE_KEY = 'ใส่ Publishable key ที่นี่';
+
+// สร้างการเชื่อมต่อฐานข้อมูล
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+// ==================================
+// 2. กำหนดช่องกรอกข้อมูล
+// ==================================
+
+const fields = [
+    'first_name',
+    'last_name',
+    'nickname',
+    'student_id',
+    'major'
+];
+
+// ดึงค่าจากช่องกรอกข้อมูล
+const val = (id) => {
+    return document.getElementById(id).value.trim();
 };
-if (!row.first_name || !row.last_name ||
-!row.student_id || !row.major) {
-msg.textContent = &#39;กรุณากรอกข้อมูลให้ครบ&#39;;
-return;
+
+
+// ==================================
+// 3. ฟังก์ชันลงทะเบียนนักศึกษา
+// ==================================
+
+async function register(event) {
+
+    event.preventDefault();
+
+    const msg = document.getElementById('msg');
+    const btn = document.getElementById('submitBtn');
+
+    // รับข้อมูลจากช่องกรอก
+    const row = {
+        first_name: val('first_name'),
+        last_name: val('last_name'),
+        nickname: val('nickname'),
+        student_id: val('student_id'),
+        major: val('major')
+    };
+
+    // ตรวจสอบข้อมูล
+    if (
+        !row.first_name ||
+        !row.last_name ||
+        !row.student_id ||
+        !row.major
+    ) {
+        msg.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
+        msg.style.color = 'red';
+        return;
+    }
+
+    // ป้องกันการกดปุ่มซ้ำ
+    btn.disabled = true;
+    btn.textContent = 'กำลังบันทึกข้อมูล...';
+
+    try {
+
+        // ส่งข้อมูลไปยัง Supabase
+        const { error } = await db
+            .from('registrations')
+            .insert([row]);
+
+        // ตรวจสอบข้อผิดพลาด
+        if (error) {
+
+            if (error.code === '23505') {
+                msg.textContent = 'รหัสนักศึกษานี้ลงทะเบียนแล้ว';
+            } else {
+                msg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+            }
+
+            msg.style.color = 'red';
+            return;
+        }
+
+        // แสดงข้อความเมื่อสำเร็จ
+        msg.textContent = 'ลงทะเบียนสำเร็จ!';
+        msg.style.color = 'green';
+
+        // ล้างข้อมูลในช่องกรอก
+        document.getElementById('registerForm').reset();
+
+        // โหลดข้อมูลใหม่
+        await loadRows();
+
+    } catch (error) {
+
+        msg.textContent = 'เกิดข้อผิดพลาด: ' + error.message;
+        msg.style.color = 'red';
+
+    } finally {
+
+        btn.disabled = false;
+        btn.textContent = 'ลงทะเบียน';
+
+    }
+
 }
-const { error } = await db.from(&#39;registrations&#39;).insert(row);
-if (error) {
-msg.textContent = (error.code === &#39;23505&#39;)
-? &#39;เลขนักศึกษานี้ลงทะเบียนแล้ว&#39;
-: &#39;เกิดข้อผิดพลาด: &#39; + error.message;
-return;
-}
-msg.textContent = &#39;ลงทะเบียนสำเร็จ&#39;;
-fields.forEach((id) =&gt; document.getElementById(id).value = &#39;&#39;);
-loadRows();
-}
-// 3) ดึงข้อมูลมาแสดงเป็นตาราง
+
+
+// ==================================
+// 4. ฟังก์ชันแสดงข้อมูลนักศึกษา
+// ==================================
+
 async function loadRows() {
-const { data, error } = await db.from(&#39;registrations&#39;)
-.select(&#39;*&#39;).order(&#39;id&#39;, { ascending: false });
-if (error) {
-document.getElementById(&#39;msg&#39;).textContent =
-&#39;อ่านข้อมูลไม่ได้: &#39; + error.message;
-return;
+
+    const msg = document.getElementById('msg');
+    const tb = document.getElementById('rows');
+    const count = document.getElementById('count');
+
+    // ดึงข้อมูลจาก Supabase
+    const { data, error } = await db
+        .from('registrations')
+        .select('*')
+        .order('id', { ascending: false });
+
+    // ตรวจสอบข้อผิดพลาด
+    if (error) {
+
+        msg.textContent = 'อ่านข้อมูลไม่ได้: ' + error.message;
+        msg.style.color = 'red';
+
+        tb.innerHTML = `
+            <tr>
+                <td colspan="5">ไม่สามารถโหลดข้อมูลได้</td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    // ล้างข้อมูลเก่า
+    tb.innerHTML = '';
+
+    // แสดงจำนวนผู้ลงทะเบียน
+    count.textContent = 'จำนวนผู้ลงทะเบียน: ' + data.length + ' คน';
+
+    // หากไม่มีข้อมูล
+    if (data.length === 0) {
+
+        tb.innerHTML = `
+            <tr>
+                <td colspan="5">ยังไม่มีข้อมูลนักศึกษา</td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    // วนลูปแสดงข้อมูล
+    data.forEach((r, index) => {
+
+        const tr = document.createElement('tr');
+
+        const values = [
+            index + 1,
+            r.first_name + ' ' + r.last_name,
+            r.nickname || '-',
+            r.student_id,
+            r.major
+        ];
+
+        values.forEach((value) => {
+
+            const td = document.createElement('td');
+
+            td.textContent = value;
+
+            tr.appendChild(td);
+
+        });
+
+        tb.appendChild(tr);
+
+    });
+
 }
-const tb = document.getElementById(&#39;rows&#39;);
-tb.innerHTML = &#39;&#39;;
-data.forEach((r) =&gt; {
-const tr = document.createElement(&#39;tr&#39;);
-[r.id, r.first_name + &#39; &#39; + r.last_name, r.nickname || &#39;-&#39;,
-r.student_id, r.major].forEach((v) =&gt; {
-const td = document.createElement(&#39;td&#39;);
-td.textContent = v;
-tr.appendChild(td);
-});
-tb.appendChild(tr);
-});
-}
+
+
+// ==================================
+// 5. เริ่มต้นการทำงานของเว็บไซต์
+// ==================================
+
+// เมื่อกดปุ่มลงทะเบียน
+document.getElementById('registerForm')
+    .addEventListener('submit', register);
+
+// โหลดข้อมูลนักศึกษาเมื่อเปิดเว็บไซต์
 loadRows();
-&lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+
+</script>
+
+</body>
+</html>
